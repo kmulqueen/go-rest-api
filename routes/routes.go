@@ -6,8 +6,19 @@ import (
 )
 
 func RegisterRoutes(server *gin.Engine) {
-	server.GET("/events", controllers.GetEvents)
-	server.GET("/events/:id", controllers.GetEvent)
-	server.POST("/events", controllers.CreateEvent)
-	server.PUT("/events/:id", controllers.UpdateEvent)
+	//* v1 API
+	{
+		v1 := server.Group("/api/v1")
+
+		//* Event Routes
+		{
+			eventRoutes := v1.Group("/events")
+			eventRoutes.GET("/", controllers.GetEvents)
+			eventRoutes.GET("/:id", controllers.GetEvent)
+			eventRoutes.POST("/", controllers.CreateEvent)
+			eventRoutes.PUT("/:id", controllers.UpdateEvent)
+			eventRoutes.DELETE("/:id", controllers.DeleteEvent)
+		}
+	}
+
 }
