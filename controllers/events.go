@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kmulqueen/go-rest-api/models"
+	"github.com/kmulqueen/go-rest-api/utils"
 )
 
 func GetEvents(context *gin.Context) {
@@ -40,16 +41,21 @@ func CreateEvent(context *gin.Context) {
 		return
 	}
 
+	userID, err := utils.VerifyToken(token)
+	if err != nil {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized."})
+		return
+	}
+
 	var event models.Event
-	err := context.ShouldBindJSON(&event)
+	err = context.ShouldBindJSON(&event)
 
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data."})
 		return
 	}
 
-	// TODO - Update once db is up
-	event.UserID = 1
+	event.UserID = userID
 
 	err = event.Save()
 	if err != nil {
