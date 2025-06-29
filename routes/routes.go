@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/kmulqueen/go-rest-api/controllers"
+	"github.com/kmulqueen/go-rest-api/middlewares"
 )
 
 func RegisterRoutes(server *gin.Engine) {
@@ -12,12 +13,17 @@ func RegisterRoutes(server *gin.Engine) {
 
 		//* Event Routes
 		{
+			//* Public Event Routes
 			eventRoutes := v1.Group("/events")
 			eventRoutes.GET("/", controllers.GetEvents)
 			eventRoutes.GET("/:id", controllers.GetEvent)
-			eventRoutes.POST("/", controllers.CreateEvent)
-			eventRoutes.PUT("/:id", controllers.UpdateEvent)
-			eventRoutes.DELETE("/:id", controllers.DeleteEvent)
+
+			//* Protected Event Routes
+			protectedEventRoutes := eventRoutes.Group("/")
+			protectedEventRoutes.Use(middlewares.Authenticate)
+			protectedEventRoutes.POST("/", controllers.CreateEvent)
+			protectedEventRoutes.PUT("/:id", controllers.UpdateEvent)
+			protectedEventRoutes.DELETE("/:id", controllers.DeleteEvent)
 		}
 
 		//* User Routes

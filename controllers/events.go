@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kmulqueen/go-rest-api/models"
-	"github.com/kmulqueen/go-rest-api/utils"
 )
 
 func GetEvents(context *gin.Context) {
@@ -35,26 +34,14 @@ func GetEvent(context *gin.Context) {
 }
 
 func CreateEvent(context *gin.Context) {
-	token := context.Request.Header.Get("Authorization")
-	if token == "" {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized."})
-		return
-	}
-
-	userID, err := utils.VerifyToken(token)
-	if err != nil {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized."})
-		return
-	}
-
 	var event models.Event
-	err = context.ShouldBindJSON(&event)
-
+	err := context.ShouldBindJSON(&event)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data."})
 		return
 	}
 
+	userID := context.GetInt64("userID")
 	event.UserID = userID
 
 	err = event.Save()
@@ -73,9 +60,15 @@ func UpdateEvent(context *gin.Context) {
 		return
 	}
 
-	_, err = models.GetEventByID(eventID)
+	event, err := models.GetEventByID(eventID)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not retrieve event."})
+		return
+	}
+
+	userID := context.GetInt64("userID")
+	if event.UserID != userID {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized to update event."})
 		return
 	}
 
@@ -107,6 +100,12 @@ func DeleteEvent(context *gin.Context) {
 	event, err := models.GetEventByID(eventID)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not retrieve event."})
+		return
+	}
+
+	userID := context.GetInt64("userID")
+	if event.UserID != userID {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized to delete event."})
 		return
 	}
 
