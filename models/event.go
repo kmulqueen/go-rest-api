@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"time"
 
 	"github.com/kmulqueen/go-rest-api/db"
@@ -99,4 +100,41 @@ func (e Event) Delete() error {
 	defer statement.Close()
 	_, err = statement.Exec(e.ID)
 	return err
+}
+
+func (e Event) Register(userID int64) error {
+	query := "INSERT INTO registrations(event_id, user_id) VALUES (?, ?)"
+	statement, err := db.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	defer statement.Close()
+	_, err = statement.Exec(e.ID, userID)
+	return err
+}
+
+func (e Event) CancelRegistration(userID int64) error {
+	query := "DELETE FROM registrations WHERE event_id = ? AND user_id = ?"
+	statement, err := db.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	defer statement.Close()
+	result, err := statement.Exec(e.ID, userID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return errors.New("Registration not found.")
+	}
+
+	return nil
 }
